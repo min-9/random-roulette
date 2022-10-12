@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roulette</title>
+
+    <!-- Google fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Local CSS file -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Scroll Arrow JS file -->
+    <script
+      src="https://min-9.github.io/scroll-arrow/main.js"
+      type="module"
+    ></script>
+  </head>
+  <body>
+    <div id="app">
+      <h1>룰렛(Roulette)</h1>
+      <div class="roulette-outer">
+        <div class="roulette-pin"></div>
+        <div class="roulette" v-bind:style="rouletteStyle">
+          <!-- 값 영역 -->
+          <div class="item-wrapper">
+            <div
+              class="item"
+              v-for="(item, index) in items"
+              v-bind:style="itemStyles[index]"
+            >
+              {{ item.value }}
+            </div>
+          </div>
+
+          <!-- 선 영역 -->
+          <div class="line-wrapper">
+            <div
+              class="line"
+              v-for="(item, index) in items"
+              v-bind:style="lineStyles[index]"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 버튼 영역 -->
+      <div class="button-wrapper">
+        <button class="button" v-on:click="show" v-bind:style="showButtonStyle">
+          룰렛 공개
+        </button>
+        <button
+          class="button"
+          v-on:click="play"
+          v-bind:disabled="buttonDisabled"
+          v-bind:style="playButtonStyle"
+        >
+          돌려!
+        </button>
+      </div>
+
+      <!-- 화살표 영역 -->
+      <div class="arrow-wrapper" v-bind:style="arrowStyle.default">
+        <scroll-arrow
+          class="left"
+          color="rgb(255, 90, 90)"
+          direction="left"
+          v-bind:style="arrowStyle.left"
+        ></scroll-arrow>
+
+        <scroll-arrow
+          class="right"
+          color="rgb(255, 90, 90)"
+          direction="right"
+          v-bind:style="arrowStyle.right"
+        ></scroll-arrow>
+      </div>
+    </div>
+
+    <!-- Vue.js 영역 -->
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+      Vue.createApp({
+        data() {
+          return {
+            items: [
+              { value: '목자' },
+              { value: '목녀' },
+              { value: '소은' },
+              { value: '민구' },
+              { value: '현비' },
+              { value: '은희' },
+              { value: '보미' },
+              { value: '은서' },
+              { value: '현경' },
+              { value: '시목' },
+            ],
+            itemStyles: [],
+            lineStyles: [],
+            playButtonStyle: {
+              display: 'none',
+            },
+            showButtonStyle: {},
+            arrowStyle: {
+              default: { visibility: 'hidden' },
+              left: { visibility: 'hidden' },
+              right: { visibility: 'hidden' },
+            },
+            current: 0, // 핀이 가리키는 위치
+            count: 0,
+            direction: ['left', 'right'],
+            buttonDisabled: false,
+          };
+        },
+        computed: {
+          segment() {
+            return 360 / this.items.length;
+          },
+          offset() {
+            return this.segment / 2;
+          },
+          angle() {
+            let temp = this.current * this.segment;
+            let randomOffset =
+              Math.floor(Math.random() * this.segment) - this.offset + 1;
+            let cycle = this.count * 360 * 5;
+            return -(temp + randomOffset + cycle);
+          },
+          rouletteStyle() {
+            return {
+              transform: `rotate(${this.angle}deg)`,
+            };
+          },
+        },
+        methods: {
+          play() {
+            let direction = this.direction[Math.floor(Math.random() * 2)];
+
+            this.arrowStyle = {
+              ...this.arrowStyle,
+              default: {
+                visibility: 'hidden',
+                transform: `rotate(0deg)`,
+              },
+              left: {
+                visibility: 'hidden',
+              },
+              right: {
+                visibility: 'hidden',
+              },
+            };
+
+            this.buttonDisabled = true;
+
+            this.playButtonStyle = {
+              ...this.playButtonStyle,
+              background: 'gray',
+              opacity: 0.5,
+            };
+
+            this.count++;
+
+            this.current = Math.floor(Math.random() * this.items.length);
+
+            setTimeout(() => {
+              this.buttonDisabled = false;
+
+              this.playButtonStyle = {
+                ...this.playButtonStyle,
+                background: 'rgb(8, 94, 214)',
+                opacity: 1,
+              };
+
+              this.arrowStyle = {
+                ...this.arrowStyle,
+                default: {
+                  visibility: 'visible',
+                  transform: `rotate(${
+                    this.angle +
+                    +this.itemStyles[this.current].transform
+                      .slice(7)
+                      .split('deg)')[0]
+                  }deg)`,
+                  animation: `fade-in 2s`,
+                },
+                [direction]: {
+                  visibility: 'visible',
+                },
+              };
+            }, 5000);
+          },
+          show() {
+            this.items = this.items.sort(() => Math.random() - 0.5);
+
+            this.itemStyles = this.itemStyles.map((el, idx) => ({
+              ...el,
+              visibility: 'visible',
+              animation: `fade-in 3s`,
+            }));
+
+            this.showButtonStyle = {
+              ...this.showButtonStyle,
+              display: 'none',
+            };
+
+            this.playButtonStyle = {
+              ...this.playButtonStyle,
+              display: 'flex',
+            };
+            console.log(this.items[this.current]);
+            console.log(this.itemStyles[this.current]);
+          },
+          refreshStyle() {
+            const itemStyles = [];
+            const lineStyles = [];
+            this.items.forEach((el, idx) => {
+              //itemStyles 정의
+              itemStyles.push({
+                transform: `rotate(${this.segment * idx}deg)`,
+                visibility: 'hidden',
+              });
+
+              //lineStyles 정의
+              lineStyles.push({
+                transform: `rotate(${this.segment * idx + this.offset}deg)`,
+              });
+            });
+            this.itemStyles = itemStyles;
+            this.lineStyles = lineStyles;
+          },
+        },
+        created() {
+          this.refreshStyle();
+        },
+      }).mount('#app');
+    </script>
+  </body>
+</html>
